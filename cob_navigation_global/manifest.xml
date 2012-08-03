@@ -9,8 +9,9 @@
   <license>LGPL</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/cob_navigation_global</url>
-  
-  <depend package="move_base"/>
+ 
+<depend package="move_base"/>
+ 
   <depend package="amcl"/>
   <depend package="map_server"/>
   <depend package="topic_tools"/>
@@ -18,5 +19,6 @@
   <depend package="cob_linear_nav"/>
   <depend package="cob_base_velocity_smoother"/>
   <depend package="cob_navigation_config"/>
+  <depend package="rostest"/>
 
 </package>
