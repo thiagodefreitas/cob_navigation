@@ -134,7 +134,7 @@ class TestNavigation(unittest.TestCase):
 
 		self.move_pub = rospy.Publisher(nameComp+ '/goal', PoseStamped)
 
-		posMsg = self.moveToSimple(self.X, self.Y, self.Theta)
+		posMsg = self.navigationGoal(self.X, self.Y, self.Theta)
        		rospy.sleep(1)      
 		self.move_pub.publish(posMsg)
 		self.sub_moveresult = rospy.Subscriber(nameIncomp+'/result', MoveBaseActionResult, self.movebase_result_callback)
@@ -147,7 +147,7 @@ class TestNavigation(unittest.TestCase):
 
 		self.move_client.wait_for_server()
 	
-		posMsg = self.moveToSimple(self.X, self.Y, self.Theta)
+		posMsg = self.navigationGoal(self.X, self.Y, self.Theta)
 
       		self.pub_goal =  MoveBaseGoal(posMsg) #DONE make the topic name available as a parameter
 
@@ -182,7 +182,7 @@ class TestNavigation(unittest.TestCase):
 	messageA = (str)(rot[2]) + " " + (str)(self.Theta) + " "+ (str)(self.tolerance_a)
     	self.assertTrue(abs(rot[2] - self.Theta) <= self.tolerance_a, "Error on the Angle %s"%messageA)
 
-    def moveToSimple(self, GX,GY,GTh):
+    def navigationGoal(self, GX,GY,GTh):
       
       goal = PoseStamped()
       goal.header.frame_id = '/map'
@@ -196,17 +196,6 @@ class TestNavigation(unittest.TestCase):
       
       return goal
   
-    def moveTo(self, GX,GY,GTh):
-	goal = PoseStamped()
-        goal.header.frame_id = '/map'
-        goal.header.stamp = rospy.get_rostime()
-        goal.goal.target_pose.header = goal.header
-        goal.goal.target_pose.pose.position.x = GX
-        goal.goal.target_pose.pose.position.y = GY
-
-	quat = quaternion_from_euler(0, 0, GTh)
-        goal.goal.target_pose.pose.orientation.w = quat [3]
-	return goal
 
 if __name__ == '__main__':
 
