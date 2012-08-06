@@ -4,5 +4,5 @@
     <include file="$(find cob_navigation_global)/launch/2dnav_ros_dwa.launch"/>
     <rosparam file="$(find cob_navigation_global)/test/yaml/nav.yaml" command="load" />
     <test test-name="NavigationDiagnostics" pkg="cob_navigation_global" 
-        type="navigation_component_testing.py" time-limit="250.0"/>
+        type="navigation_component_testing.py" time-limit="125.0"/>
 </launch>

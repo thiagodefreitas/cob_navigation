@@ -1,6 +1,8 @@
-goalX: 2.250
-goalY: -0.478
-goalTheta: 0.232
-mode: simple
+mode: 
+  topic:
+  - topicName: _simple  
 toleranceD: 0.3
 toleranceA: 0.3
+goalTheta: 0.232
+goalY: -0.478
+goalX: 2.250

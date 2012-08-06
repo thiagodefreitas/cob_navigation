@@ -62,6 +62,7 @@ import sys
 PKG = 'cob_navigation_global'
 
 import roslib; roslib.load_manifest(PKG)
+roslib.load_manifest('cob_script_server')
 import actionlib
 import rostest
 import rospy
@@ -84,76 +85,103 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import *
 from nav_msgs.srv import *
 
-import unittest
+from simple_script_server import *
 
+import unittest
+#DONE tray down and arm folded(yaml file) 
 class TestNavigation(unittest.TestCase):
     
-    def tearDown(self):
-        if (self.sub_moveresult!=0):
-            self.sub_moveresult.unregister()
-    
     def setUp(self):
-      
-      rospy.sleep(2)
-  
-      self.goal_reached = False
       
       self.X = (float)(rospy.get_param("goalX"))
       self.Y = (float)(rospy.get_param("goalY"))
       self.Theta = (float)(rospy.get_param("goalTheta"))
-      self.mode = rospy.get_param("mode")
+      self.goal_reached = False
+      mode = rospy.get_param("mode")
+      if ("topic" in mode):
+	      self.mode = "topic"
+	      self.topic_name = mode["topic"][0]["topicName"]
+      else:
+              self.mode = "action"
+		
       self.tolerance_d = (float)(rospy.get_param("toleranceD"))
       self.tolerance_a = (float)(rospy.get_param("toleranceA"))
 
+      self.sss = simple_script_server()
+
       while(rospy.rostime.get_time() == 0.0):
-      		#print 'Waiting for initial time publication'
       		time.sleep(0.1)
 
-      
+
+      self.sss.move("arm","folded")
+      self.sss.move("tray","down")
+      rospy.sleep(0.2)
+ 
       self.tfL = tf.TransformListener()
-      
-      rospy.sleep(1)
-
-      if (self.mode== "simple"):
-      	self.pub_goal = rospy.Publisher('/move_base_simple/goal', PoseStamped)  
-      elif(self.mode == "normal"):
-      	self.pub_goal = rospy.Publisher('/move_base/goal', MoveBaseActionGoal)
-
-
-      self.pub_cancgoal = rospy.Publisher('/move_base/cancel', GoalID)
-      self.pub_cmd = rospy.Publisher('/cmd_vel', Twist)
-    
-      self.sub_moveresult = rospy.Subscriber('/move_base/result', MoveBaseActionResult, self.movebase_result_callback)
-     
-      rospy.sleep(2) 
-                   
-    def test_navigation(self):   
-
-
-      	if(self.mode == "simple"):
-		self.moveToSimple(self.X,self.Y,self.Theta)
-	elif(self.mode == "normal"):
-		self.moveTo(self.X, self.Y, self.Theta)
-	
-	rospy.sleep(20.0)
-	
-	(trans,rot) = self.tfL.lookupTransform('/map', '/base_link', rospy.Time(0))
-
-    	self.assertTrue(self.goal_reached == True, "The goal position could not be reached%s"%self.goal_reached)
-
-	messageX = (str)(trans[0]) + " " + (str)(self.X) + " "+ (str)(self.tolerance_d)
-	messageY = (str)(trans[1]) + " " + (str)(self.Y) + " "+ (str)(self.tolerance_d)
-    	
-	self.assertTrue(abs(trans[0] - self.X) <= self.tolerance_d, "Error on the X axis position %s"%messageX)
-    	self.assertTrue(abs(trans[1] - self.Y) <= self.tolerance_d, "Error on the Y axis position %s"%messageY)
-
-
-
+ 
     def movebase_result_callback(self, data):
       
       if (data.status.text == "Goal reached."):
-        self.goal_reached = True
-        
+        self.goal_reached = True     
+
+    def test_navigation(self):   
+	
+
+	if (self.mode == "topic"):
+
+		nameIncomp = 'move_base'	
+		nameComp = nameIncomp + self.topic_name
+
+		self.move_pub = rospy.Publisher(nameComp+ '/goal', PoseStamped)
+
+		posMsg = self.moveToSimple(self.X, self.Y, self.Theta)
+       		rospy.sleep(1)      
+		self.move_pub.publish(posMsg)
+		self.sub_moveresult = rospy.Subscriber(nameIncomp+'/result', MoveBaseActionResult, self.movebase_result_callback)
+
+		rospy.sleep(20)
+
+      	elif(self.mode == "action"):
+
+ 		self.move_client = actionlib.SimpleActionClient("/move_base", MoveBaseAction)
+
+		self.move_client.wait_for_server()
+	
+		posMsg = self.moveToSimple(self.X, self.Y, self.Theta)
+
+      		self.pub_goal =  MoveBaseGoal(posMsg) #DONE make the topic name available as a parameter
+
+       		self.move_client.send_goal(self.pub_goal) 
+				
+		self.move_client.wait_for_result(rospy.Duration(20.0))
+
+        	result = self.move_client.get_result()
+		
+		state = self.move_client.get_state()
+	
+    		if(state == 3):
+			self.goal_reached = True
+
+	start_time = rospy.rostime.get_time()
+
+	self.tfL.waitForTransform("/map", "/base_link", rospy.Time(), rospy.Duration(20.0))
+
+	(trans,rot) = self.tfL.lookupTransform('/map', '/base_link', rospy.Time(0))
+	
+	angles = euler_from_quaternion(rot)
+
+	messageX = (str)(trans[0]) + " " + (str)(self.X) + " "+ (str)(self.tolerance_d)
+	messageY = (str)(trans[1]) + " " + (str)(self.Y) + " "+ (str)(self.tolerance_d)
+	
+	self.assertTrue(self.goal_reached == True, "The goal position could not be reached%s"%self.goal_reached)    	
+	self.assertTrue(abs(trans[0] - self.X) <= self.tolerance_d, "Error on the X axis position %s"%messageX)
+    	self.assertTrue(abs(trans[1] - self.Y) <= self.tolerance_d, "Error on the Y axis position %s"%messageY)
+		
+        #DONE add orientation check, tf for quaternions to euler
+
+	messageA = (str)(rot[2]) + " " + (str)(self.Theta) + " "+ (str)(self.tolerance_a)
+    	self.assertTrue(abs(rot[2] - self.Theta) <= self.tolerance_a, "Error on the Angle %s"%messageA)
+
     def moveToSimple(self, GX,GY,GTh):
       
       goal = PoseStamped()
@@ -161,31 +189,25 @@ class TestNavigation(unittest.TestCase):
       goal.header.stamp = rospy.get_rostime()
       goal.pose.position.x = GX
       goal.pose.position.y = GY
-      goal.pose.orientation.z = sin(radians(GTh)/2)
-      goal.pose.orientation.w = cos(radians(GTh)/2)
-      rospy.sleep(1)
-      self.goal_reached = False
-      self.pub_goal.publish(goal)
       
+      quat = quaternion_from_euler(0, 0, GTh)
+
+      goal.pose.orientation.w = quat [3]
       
+      return goal
+  
     def moveTo(self, GX,GY,GTh):
-        goal = MoveBaseActionGoal()
+	goal = PoseStamped()
         goal.header.frame_id = '/map'
         goal.header.stamp = rospy.get_rostime()
-        goal.goal_id.stamp = goal.header.stamp
-        goal.goal_id.id = 'goto'
         goal.goal.target_pose.header = goal.header
         goal.goal.target_pose.pose.position.x = GX
         goal.goal.target_pose.pose.position.y = GY
-        goal.goal.target_pose.pose.orientation.z = sin(radians(GTh)/2)
-        goal.goal.target_pose.pose.orientation.w = cos(radians(GTh)/2)
-        
-       	rospy.sleep(1)
-        self.goal_reached = False
-        
-        self.pub_goal.publish(goal)   
-        
-           
+
+	quat = quaternion_from_euler(0, 0, GTh)
+        goal.goal.target_pose.pose.orientation.w = quat [3]
+	return goal
+
 if __name__ == '__main__':
 
     rospy.init_node('test', anonymous=True)
