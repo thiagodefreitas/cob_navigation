@@ -1,0 +1,8 @@
+mode: action
+action_name: /move_base
+topic_name: _simple
+xy_goal_tolerance: 0.3
+yaw_goal_tolerance: 0.3
+goals:
+  - [1.530,-1.385, 0.000]
+  - [1.503,-1.532, 0.000]

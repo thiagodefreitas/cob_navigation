@@ -38,4 +38,42 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_roslaunch_check(launch/2dnav_ros_dwa.launch ROBOT=cob3-3 ROBOT_ENV=ipa-kitchen)
 #rosbuild_add_roslaunch_check(launch/2dnav_ros_tr.launch ROBOT=cob3-3 ROBOT_ENV=ipa-kitchen)
 
-rosbuild_add_rostest(test/component_test.xml)
+rosbuild_add_rostest(test/1_cob3-1.xml)
+rosbuild_add_rostest(test/2_cob3-1.xml)
+rosbuild_add_rostest(test/3_cob3-1.xml)
+
+rosbuild_add_rostest(test/1_cob3-2.xml)
+rosbuild_add_rostest(test/2_cob3-2.xml)
+rosbuild_add_rostest(test/3_cob3-2.xml)
+
+rosbuild_add_rostest(test/1_cob3-3.xml)
+rosbuild_add_rostest(test/2_cob3-3.xml)
+rosbuild_add_rostest(test/3_cob3-3.xml)
+
+rosbuild_add_rostest(test/1_cob3-4.xml)
+rosbuild_add_rostest(test/2_cob3-4.xml)
+rosbuild_add_rostest(test/3_cob3-4.xml)
+
+rosbuild_add_rostest(test/1_cob3-5.xml)
+rosbuild_add_rostest(test/2_cob3-5.xml)
+rosbuild_add_rostest(test/3_cob3-5.xml)
+
+rosbuild_add_rostest(test/1_cob3-6.xml)
+rosbuild_add_rostest(test/2_cob3-6.xml)
+rosbuild_add_rostest(test/3_cob3-6.xml)
+
+rosbuild_add_rostest(test/1_raw3-1.xml)
+rosbuild_add_rostest(test/2_raw3-1.xml)
+rosbuild_add_rostest(test/3_raw3-1.xml)
+
+rosbuild_add_rostest(test/1_raw3-2.xml)
+rosbuild_add_rostest(test/2_raw3-2.xml)
+rosbuild_add_rostest(test/3_raw3-2.xml)
+
+rosbuild_add_rostest(test/1_raw3-3.xml)
+rosbuild_add_rostest(test/2_raw3-3.xml)
+rosbuild_add_rostest(test/3_raw3-3.xml)
+
+rosbuild_add_rostest(test/1_desire.xml)
+rosbuild_add_rostest(test/2_desire.xml)
+rosbuild_add_rostest(test/3_desire.xml)
