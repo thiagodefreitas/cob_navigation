@@ -57,6 +57,8 @@
 #
 #################################################################
 
+#TODO: Make the new implementation
+
 import sys
 
 PKG = 'cob_navigation_global'
@@ -90,9 +92,9 @@ from simple_script_server import *
 import unittest
 #DONE tray down and arm folded(yaml file) 
 class TestNavigation(unittest.TestCase):
-    
+
 	def setUp(self):
-      
+
 		self.goals = rospy.get_param("goals")
 
 		self.goals_qty = len(self.goals)
@@ -113,7 +115,7 @@ class TestNavigation(unittest.TestCase):
 
 		self.sss.move("arm","folded")
 		self.sss.move("tray","down")
- 
+
 		self.tfL = tf.TransformListener()
 
 		if (self.mode == "topic"):
@@ -127,18 +129,25 @@ class TestNavigation(unittest.TestCase):
 
 			self.move_client.wait_for_server()
 
+		self.log_file = open("component_log.txt", "w")
 
- 
+		self.start_time = 0
+		self.elapsed_time = 0
+
+
+
 	def movebase_result_callback(self, data):
-      
+
 		if (data.status.text == "Goal reached."):
-			self.goal_reached = True     
+			self.goal_reached = True
 
-	def test_navigation(self):   
-	
-		for i in range(self.goals_qty):	
+	def test_navigation(self):
 
-			self.goal_reached == False	
+		self.start_time = rospy.rostime.get_time()
+
+		for i in range(self.goals_qty):
+
+			self.goal_reached == False
 			self.goal_x = self.goals[i][0]
 			self.goal_y = self.goals[i][1]
 			self.goal_theta = self.goals[i][2]
@@ -146,7 +155,7 @@ class TestNavigation(unittest.TestCase):
 			if (self.mode == "topic"):
 
 				posMsg = self.navigationGoal(self.goal_x, self.goal_y, self.goal_theta)
-				rospy.sleep(1)      
+				rospy.sleep(1)
 				self.move_pub.publish(posMsg)
 
 				rospy.sleep(20)
@@ -157,14 +166,14 @@ class TestNavigation(unittest.TestCase):
 
 				self.pub_goal =  MoveBaseGoal(posMsg) #DONE make the topic name available as a parameter
 
-				self.move_client.send_goal(self.pub_goal) 
-				
+				self.move_client.send_goal(self.pub_goal)
+
 				self.move_client.wait_for_result(rospy.Duration(30.0))
 
 				result = self.move_client.get_result()
-		
+
 				state = self.move_client.get_state()
-	
+
 				if(state == 3):
 					self.goal_reached = True
 
@@ -173,37 +182,46 @@ class TestNavigation(unittest.TestCase):
 			self.tfL.waitForTransform("/map", "/base_link", rospy.Time(), rospy.Duration(20.0))
 
 			(trans,rot) = self.tfL.lookupTransform('/map', '/base_link', rospy.Time(0))
-	
+
 			angles = euler_from_quaternion(rot)
 
 			messageX = (str)(trans[0]) + " " + (str)(self.goal_x) + " "+ (str)(self.xy_goal_tolerance)
 			messageY = (str)(trans[1]) + " " + (str)(self.goal_y) + " "+ (str)(self.xy_goal_tolerance)
-	
-			self.assertTrue(self.goal_reached == True, "The goal position could not be reached%s"%self.goal_reached)    	
+
+			self.assertTrue(self.goal_reached == True, "The goal position could not be reached%s"%self.goal_reached)
 			self.assertTrue(abs(trans[0] - self.goal_x) <= self.xy_goal_tolerance, "Error on the X axis position %s"%messageX)
 			self.assertTrue(abs(trans[1] - self.goal_y) <= self.xy_goal_tolerance, "Error on the Y axis position %s"%messageY)
-		
+
         #DONE add orientation check, tf for quaternions to euler
 
 			messageA = (str)(rot[2]) + " " + (str)(self.goal_theta) + " "+ (str)(self.yaw_goal_tolerance)
 			self.assertTrue(abs(rot[2] - self.goal_theta) <= self.yaw_goal_tolerance, "Error on the Angle %s"%messageA)
-			
+
 			rospy.sleep(1)
 
+		self.elapsed_time = rospy.rostime.get_time() - self.start_time
+
+		string_log = "{\"stack_name\":\"cob_navigation_global\",\"elapsed_time\":"+(str)(self.elapsed_time) + "}"		
+
+		self.log_file.write("%s\n" % string_log)
+
+		self.log_file.close()
+
+
 	def navigationGoal(self, GX,GY,GTh):
-      
+
 		goal = PoseStamped()
 		goal.header.frame_id = '/map'
 		goal.header.stamp = rospy.get_rostime()
 		goal.pose.position.x = GX
 		goal.pose.position.y = GY
-      
+
 		quat = quaternion_from_euler(0, 0, GTh)
 
 		goal.pose.orientation.w = quat [3]
-      
+
 		return goal
-  
+
 
 if __name__ == '__main__':
 

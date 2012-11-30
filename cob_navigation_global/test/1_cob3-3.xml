@@ -1,11 +1,9 @@
 <launch>
     <param name="/use_sim_time" value="true"/>
-<!--    <include file="$(find cob_gazebo_worlds)/launch/ipa-kitchen.launch"/> -->
     <include file="$(find cob_bringup_sim)/launch/robot.launch">
 		<arg name="robot" value="cob3-3"/>
 		<arg name="robot_env" value="ipa-kitchen"/>
     </include>
-   <!-- <include file="$(find cob_default_robot_config)/upload_param.launch"/> -->
     
     <arg name="robot" value="cob3-3"/>
     <include file="$(find cob_default_robot_config)/$(arg robot)/upload_param_$(arg robot).launch" />
