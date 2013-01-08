@@ -208,9 +208,10 @@ class TestNavigation(unittest.TestCase):
 			messageA = (str)(rot[2]) + " " + (str)(self.goal_theta) + " "+ (str)(self.yaw_goal_tolerance)
 			self.assertTrue(abs(rot[2] - self.goal_theta) <= self.yaw_goal_tolerance, "Error on the Angle %s"%messageA)
 			
-			self.current_rotation = abs(self.current_rotation - rot[2])
+			rot_chg = abs(self.current_rotation - rot[2])
+			self.current_rotation = rot[2]
 			
-			if(self.current_rotation >= 0.1):
+			if(rot_chg >= 0.02):
 			        self.dir_chg += 1
 
 			rospy.sleep(1)
