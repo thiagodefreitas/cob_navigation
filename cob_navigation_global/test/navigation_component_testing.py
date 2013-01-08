@@ -65,6 +65,7 @@ PKG = 'cob_navigation_global'
 
 import roslib; roslib.load_manifest(PKG)
 roslib.load_manifest('cob_script_server')
+roslib.load_manifest('cob_gazebo_worlds')
 import actionlib
 import rostest
 import rospy
@@ -87,6 +88,10 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import *
 from nav_msgs.srv import *
 
+from gazebo.srv import *
+from gazebo_msgs.srv import *
+from gazebo_msgs.msg import *
+
 from simple_script_server import *
 
 import unittest
@@ -98,15 +103,18 @@ class TestNavigation(unittest.TestCase):
 		self.goals = rospy.get_param("goals")
 
 		self.goals_qty = len(self.goals)
-
+                self.collisions_ctr = 0
 		self.goal_reached = False
 		self.mode = rospy.get_param("mode")
 		self.action_name = rospy.get_param("action_name")
 		self.xy_goal_tolerance  = (float)(rospy.get_param("xy_goal_tolerance"))
 		self.yaw_goal_tolerance = (float)(rospy.get_param("yaw_goal_tolerance"))
+		self.current_rotation = 0.
+		self.dir_chg = 0
 
 		self.sss = simple_script_server()
-
+               
+                
 		while(rospy.rostime.get_time() == 0.0):
 			time.sleep(0.1)
 
@@ -117,7 +125,7 @@ class TestNavigation(unittest.TestCase):
 		self.sss.move("tray","down")
 
 		self.tfL = tf.TransformListener()
-
+                rospy.Subscriber("/base_bumper/state", ContactsState, self.callback, queue_size=1)                
 		if (self.mode == "topic"):
 			self.topic_name = rospy.get_param("topic_name")
 			self.move_pub = rospy.Publisher(self.action_name + self.topic_name + '/goal', PoseStamped)
@@ -135,6 +143,9 @@ class TestNavigation(unittest.TestCase):
 		self.elapsed_time = 0
 
 
+        def callback(self, msg):
+                if (msg.states != []):
+                        self.collisions_ctr+=1
 
 	def movebase_result_callback(self, data):
 
@@ -196,12 +207,18 @@ class TestNavigation(unittest.TestCase):
 
 			messageA = (str)(rot[2]) + " " + (str)(self.goal_theta) + " "+ (str)(self.yaw_goal_tolerance)
 			self.assertTrue(abs(rot[2] - self.goal_theta) <= self.yaw_goal_tolerance, "Error on the Angle %s"%messageA)
+			
+			self.current_rotation = abs(self.current_rotation - rot[2])
+			
+			if(self.current_rotation >= 0.1):
+			        self.dir_chg += 1
 
 			rospy.sleep(1)
 
 		self.elapsed_time = rospy.rostime.get_time() - self.start_time
 
-		string_log = "{\"stack_name\":\"cob_navigation_global\",\"elapsed_time\":"+(str)(self.elapsed_time) + "}"		
+		string_log = "{\"stack_name\":\"cob_navigation_global\",\"elapsed_time\":"+(str)(self.elapsed_time) + ",\"number_collisions\":"+(str)(self.collisions_ctr) + \
+		        ",\"direction_changes\":"+(str)(self.dir_chg) + "}"		
 
 		self.log_file.write("%s\n" % string_log)
 
