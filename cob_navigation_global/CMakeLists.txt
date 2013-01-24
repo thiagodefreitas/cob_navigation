@@ -47,7 +47,7 @@ rosbuild_add_roslaunch_check(launch/2dnav_ros_dwa.launch ROBOT=cob3-3 ROBOT_ENV=
 #rosbuild_add_rostest(test/3_cob3-2.xml)
 #
 #rosbuild_add_rostest(test/1_cob3-3.xml)
-#rosbuild_add_rostest(test/2_cob3-3.xml)
+rosbuild_add_rostest(test/2_cob3-3.xml)
 rosbuild_add_rostest(test/3_cob3-3.xml)
 #
 #rosbuild_add_rostest(test/1_cob3-4.xml)
