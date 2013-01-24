@@ -77,3 +77,7 @@ rosbuild_add_rostest(test/3_cob3-3.xml)
 #rosbuild_add_rostest(test/1_desire.xml)
 #rosbuild_add_rostest(test/2_desire.xml)
 #rosbuild_add_rostest(test/3_desire.xml)
+
+rosbuild_add_roslaunch_check(launch ROBOT=cob3-3 ROBOT_ENV=ipa-kitchen)
+rosbuild_add_roslaunch_check(launch robot:=cob3-3 robot_env:=ipa-kitchen)
+

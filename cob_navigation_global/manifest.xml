@@ -20,6 +20,7 @@
   <depend package="cob_linear_nav"/>
   <depend package="cob_base_velocity_smoother"/>
   <depend package="cob_navigation_config"/>
+  <depend package="rviz"/>
   <depend package="rostest"/>
   <depend package="cob_bringup_sim"/>
 
